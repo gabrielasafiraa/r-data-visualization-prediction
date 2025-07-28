@@ -1,0 +1,164 @@
+---
+title: "Perbandingan"
+output: html_document
+date: "2025-06-04"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(readr)
+library(dplyr)
+library(stringr)
+```
+
+```{r}
+# Baca dataset
+df_penduduk <- read_csv("Dataset Data Mining - Sheet4.csv")
+df_miskin <- read_csv("Dataset Data Mining - Sheet3.csv")
+
+# Bersihkan df_penduduk (Sheet4)
+df_penduduk <- df_penduduk %>%
+  select(`Provinsi di Indonesia`, `...3`) %>%
+  rename(
+    Provinsi = `Provinsi di Indonesia`,
+    jumlah_penduduk = `...3`
+  ) %>%
+  filter(!is.na(Provinsi), toupper(Provinsi) != "INDONESIA") %>%
+  mutate(
+    Provinsi = str_to_upper(Provinsi),
+    jumlah_penduduk = as.numeric(jumlah_penduduk)
+  )
+
+# Bersihkan df_miskin (Sheet3)
+df_miskin <- df_miskin %>%
+  select(Provinsi, `2023`) %>%
+  rename(jumlah_penduduk_miskin = `2023`) %>%
+  mutate(
+    Provinsi = str_to_upper(Provinsi),
+    jumlah_penduduk_miskin = jumlah_penduduk_miskin %>%
+      str_replace_all("[^0-9,]", "") %>%
+      str_replace(",", ".") %>%
+      as.numeric()
+  )
+
+# Gabungkan kedua data
+data <- left_join(df_penduduk, df_miskin, by = "Provinsi")
+
+# Hapus provinsi yang tidak memiliki data miskin
+data <- data %>%
+  filter(!is.na(jumlah_penduduk_miskin))
+
+# Hitung persentase kemiskinan
+data <- data %>%
+  mutate(persentase_kemiskinan = (jumlah_penduduk_miskin / jumlah_penduduk) * 100)
+
+# Lihat hasil
+head(data)
+```
+
+
+```{r}
+library(dplyr)
+library(plotly)
+
+# Ambil 5 provinsi dengan persentase kemiskinan tertinggi
+top5 <- data %>%
+  arrange(desc(persentase_kemiskinan)) %>%
+  slice(1:5)
+
+# Buat pie chart
+plot_ly(
+  top5,
+  labels = ~Provinsi,
+  values = ~persentase_kemiskinan,
+  type = 'pie',
+  textinfo = 'percent',
+  insidetextorientation = 'radial',
+  marker = list(
+    colors = c('#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF')
+  )
+) %>%
+  layout(
+    title = "Top 5 Provinsi dengan Persentase Kemiskinan Tertinggi (2023)",
+    showlegend = TRUE
+  )
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```{r}
+# Langkah 1: Baca kedua dataset
+df_miskin <- read_csv("Dataset Data Mining - Sheet3.csv")
+
+## Ubah nama kolom
+df_miskin <- df_miskin %>%
+  rename(
+    Provinsi = `Provinsi`,
+    Jumlah_Miskin_2022 = `2022`,
+    Jumlah_Miskin_2023 = `2023`,
+    Jumlah_Miskin_2024 = `2024`
+  )
+
+# Langkah 4: Ubah format numerik (hilangkan koma)
+df_miskin$Jumlah_Miskin_2023 <- as.numeric(gsub(",", "", df_miskin$Jumlah_Miskin_2023))
+
+# Langkah 5: Hapus NA
+df_miskin <- df_miskin[!is.na(df_miskin$Jumlah_Miskin_2023), ]
+
+# Langkah 6: Cek data
+head(df_miskin)
+```
+
+```{r}
+head(df_miskin)
+str(df_miskin)
+```
+
+
+```{r}
+df_total <- read_csv("Dataset Data Mining - Sheet4.csv")
+
+# Ubah nama kolom agar lebih mudah dipakai
+df_total <- df_total %>%
+  rename(
+    Provinsi = `Provinsi di Indonesia`,
+    Penduduk_2024 = `Jumlah Penduduk Menurut Provinsi di Indonesia (Ribu Jiwa)`,
+    Penduduk_2023 = `...3`
+  )
+
+# Hapus baris NA
+df_total <- df_total[!is.na(df_total$Provinsi), ]
+
+# Hapus koma pada angka, lalu ubah ke numerik
+df_total$Penduduk_2024 <- as.numeric(gsub(",", "", df_total$Penduduk_2024))
+df_total$Penduduk_2023 <- as.numeric(gsub(",", "", df_total$Penduduk_2023))
+
+# Cek hasil pembersihan
+head(df_total)
+
+```
+
+```{r}
+unique(df_miskin$Provinsi)
+unique(df_total$Provinsi)
+```

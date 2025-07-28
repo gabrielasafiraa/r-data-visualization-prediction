@@ -1,0 +1,148 @@
+---
+title: "patokan"
+output: html_document
+date: "2025-06-02"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+library(plotly)
+library(tidyr)
+library(readr)
+library(scales)
+```
+
+```{r}
+df <- read_csv("jml_miskin_prov - Sheet3.csv")
+colnames(df)  
+head(df)     
+```
+
+```{r}
+## Ubah nama kolom
+df <- df %>%
+  rename(
+    Provinsi = Provinsi,
+    Tahun_2022 = Tahun,
+    Tahun_2023 = `...4`,
+    Tahun_2024 = `...5`
+  )
+```
+
+```{r}
+df <- df[-1, ] # Hapus baris pertama karena sudah direname
+```
+
+```{r}
+### Ubah data di kolom Tahun menjadi numerik
+df$Tahun_2023 <- as.numeric(gsub(",", "", df$Tahun_2023))
+```
+```{r}
+df <- df[!is.na(df$Tahun_2023), ]
+
+```
+
+
+```{r}
+df <- df %>%
+  arrange(Tahun_2023)
+
+# Plot dengan bar horizontal
+fig <- plot_ly(
+  data = df,
+  x = ~Tahun_2023,
+  y = ~reorder(Provinsi, Tahun_2023),
+  type = 'bar',
+  orientation = 'h',
+  marker = list(color = 'steelblue')
+)
+
+fig <- fig %>% layout(
+  title = "Jumlah Penduduk Miskin per Provinsi (Tahun 2023)",
+  xaxis = list(title = "Jumlah Penduduk Miskin Tahun 2023", tickformat = ","),
+  yaxis = list(title = "Provinsi"),
+  margin = list(l = 120),  # beri ruang untuk nama provinsi panjang
+  bargap = 0.2
+)
+
+fig
+
+```
+
+
+## Top 5 Provinsi dengan Jumlah Penduduk Miskin Tertinggi
+```{r}
+# 1. Urutkan berdasarkan jumlah penduduk miskin tahun 2023 (bukan persentase)
+df_sorted <- df %>%
+  arrange(desc(Tahun_2023))
+
+# 2. Hitung total nasional
+total_nasional <- sum(df_sorted$Tahun_2023, na.rm = TRUE)
+
+# 3. Ambil top 5
+top5 <- df_sorted[1:5, ]
+
+# 4. Hitung persentase
+top5$Persentase <- top5$Tahun_2023 / total_nasional * 100
+
+# 5. Buat baris "Lainnya"
+lainnya <- data.frame(
+  Provinsi = "Lainnya",
+  Tahun_2023 = sum(df_sorted$Tahun_2023[6:nrow(df_sorted)], na.rm = TRUE)
+)
+lainnya$Persentase <- lainnya$Tahun_2023 / total_nasional * 100
+
+```
+
+
+```{r}
+df_gabung <- rbind(top5[, c("Provinsi", "Tahun_2023", "Persentase")],
+                   lainnya[, c("Provinsi", "Tahun_2023", "Persentase")])
+```
+
+
+```{r}
+df_gabung <- df_gabung %>%
+  arrange(desc(Persentase)) %>%
+  mutate(ypos = cumsum(Persentase) - 0.5 * Persentase)
+```
+
+
+```{r}
+df_gabung <- df_gabung %>%
+  arrange(desc(Persentase)) %>%
+  mutate(
+    Jumlah_juta = Tahun_2023 / 1e6,
+    label_jumlah = paste0(round(Jumlah_juta, 2), " juta")
+  )
+
+# Pie chart
+fig <- plot_ly(
+  data = df_gabung,
+  labels = ~Provinsi,
+  values = ~Persentase,
+  type = 'pie',
+  text = ~label_jumlah,
+  textinfo = 'text',
+  insidetextorientation = 'radial',
+  textposition = 'inside',
+  marker = list(colors = c('#F1948A', '#85C1E9', '#82E0AA', '#D7BDE2', '#F9E79F', '#F5CBA7'))
+)
+
+fig <- fig %>% layout(
+  title = list(
+    text = "Jumlah Penduduk Miskin (2023): 5 Provinsi Teratas + Lainnya",
+    x = 0.5
+  ),
+  showlegend = TRUE
+)
+
+fig
+```
+
+
+
+
+

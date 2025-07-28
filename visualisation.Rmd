@@ -1,0 +1,325 @@
+---
+title: "Coba coba"
+author: "idiot kelas kakap no counter"
+date: "2025-05-20"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+library(plotly)
+library(readr)
+```
+
+## R Markdown
+```{r, echo= FALSE}
+data <- read_csv("Dataset data mining - Sheet1.csv")
+colnames(data)
+
+```
+```{r, echo = FALSE}
+View(data)
+
+```
+
+
+```{r ,echo=FALSE}
+
+
+p <- ggplot(data, aes(x = `Persentase penduduk miskin`, y = `Persentase pengangguran`, 
+                      label = Nama_kota)) +
+  geom_point(color = "blue", size = 3, alpha = 0.7) +
+  geom_smooth(method = "lm", color = "black", se = FALSE) +
+  labs(title = "Scatter Plot: Kemiskinan vs Pengangguran",
+       x = "Persentase Penduduk Miskin (%)",
+       y = "Persentase Pengangguran (%)") +
+  theme_minimal()
+
+# Konversi ke plotly
+ggplotly(p)
+
+```
+
+Hasil visualisasi di atas menunjukan kalau persentase pengangguran memiliki pengaruh yang kecil terhadap persentase kemiskinan. Hal ini cukup menarik, mengingat 
+dengan banyaknya pengangguran, bagaimana orang pengangguran tersebut bisa mendapatkan uang untuk memenuhi hidup mereka, dan bagaimana mereka yang memiliki pengangguran yang tinggi tapi masih memiliki kemiskinan yang cukup tinggi.
+
+
+```{r, echo = TRUE}
+
+
+
+
+```
+
+
+
+```{r}
+
+
+
+```
+
+
+
+## Including Plots
+
+
+
+```{r , echo=FALSE}
+
+
+
+
+
+```
+
+```{r}
+data_clean <- data %>%
+  select(provinsi, Nama_kota,
+         `Persentase penduduk miskin`,
+         `Rata-rata Pengeluaran per Kapita Sebulan  - Makanan`,
+         `Rata-rata Pengeluaran per Kapita sebulan - Bukan Makanan`) %>%
+  filter(
+    !is.na(`Persentase penduduk miskin`),
+    !is.na(`Rata-rata Pengeluaran per Kapita Sebulan  - Makanan`),
+    !is.na(`Rata-rata Pengeluaran per Kapita sebulan - Bukan Makanan`)
+  )
+
+# Rename kolom untuk kemudahan
+colnames(data_clean) <- c("Provinsi", "Kota", "Kemiskinan", "Pengeluaran_Makanan", "Pengeluaran_Bukan_Makanan")
+
+# ===== SCATTERPLOT 1: Pengeluaran Bukan Makanan vs Kemiskinan =====
+plot1 <- ggplot(data_clean, aes(x = Pengeluaran_Bukan_Makanan, y = Kemiskinan)) +
+  geom_point(aes(text = paste("Kota:", Kota, "<br>Provinsi:", Provinsi)),
+             color = "blue", size = 3, alpha = 0.7) +
+  geom_smooth(method = "lm", color = "black", se = TRUE) +
+  labs(title = "Pengeluaran Bukan Makanan vs Persentase Kemiskinan",
+       x = "Pengeluaran Bukan Makanan (Rp)",
+       y = "Persentase Penduduk Miskin (%)") +
+  theme_minimal()
+
+
+interactive_plot1 <- ggplotly(plot1, tooltip = "text")
+
+# ===== SCATTERPLOT 2: Pengeluaran Makanan vs Kemiskinan =====
+plot2 <- ggplot(data_clean, aes(x = Pengeluaran_Makanan, y = Kemiskinan)) +
+  geom_point(aes(text = paste("Kota:", Kota, "<br>Provinsi:", Provinsi)),
+             color = "darkorange", size = 3, alpha = 0.7) +
+  geom_smooth(method = "lm", color = "black", se = TRUE) +
+  labs(title = "Pengeluaran Makanan vs Persentase Kemiskinan",
+       x = "Pengeluaran Makanan (Rp)",
+       y = "Persentase Penduduk Miskin (%)") +
+  theme_minimal()
+interactive_plot2 <- ggplotly(plot2, tooltip = "text")
+# Tampilkan hasil
+interactive_plot1
+interactive_plot2
+
+
+
+```
+
+
+
+```{r,echo = FALSE}
+r2lm <- ggplot(data, aes(x = `rata-rata lama sekolah`, y = `Persentase penduduk miskin`))+
+  geom_point(color = "blue", size = 3, alpha = 0.7)+
+  geom_smooth(method = "lm", color = "black", se = TRUE)+
+  labs(title = "Rata-rata lama sekolah vs Persentase penduduk miskin",
+       x = "Rata-rata lama sekolah",
+       y = "Persentase penduduk miskin")+
+  theme_minimal()
+
+ggplotly(r2lm)
+
+
+
+```
+
+```{r,echo = FALSE}
+r2lm <- ggplot(data, aes(x = `IPM`, y = `Persentase penduduk miskin`))+
+  geom_point(color = "blue", size = 3, alpha = 0.7)+
+  geom_smooth(method = "lm", color = "black", se = TRUE)+
+  labs(title = "IPM vs Persentase penduduk miskin",
+       x = "IPM",
+       y = "Persentase penduduk miskin")+
+  theme_minimal()
+
+ggplotly(r2lm)
+
+
+```
+
+
+```{r}
+
+# Bersihkan dan konversi kolom pengeluaran menjadi numerik
+data$Pengeluaran_Makanan <- as.numeric(gsub("[^0-9]", "", data$Rata.rata.Pengeluaran.per.Kapita.Sebulan....Makanan))
+data$Pengeluaran_NonMakanan <- as.numeric(gsub("[^0-9]", "", data$Rata.rata.Pengeluaran.per.Kapita.sebulan...Bukan.Makanan))
+data$Persentase_penduduk_miskin <- as.numeric(data$Persentase.penduduk.miskin)
+
+# Top 5 pengeluaran makanan tertinggi
+top_makanan <- data %>%
+  select(Nama_kota, Pengeluaran_Makanan) %>%
+  arrange(desc(Pengeluaran_Makanan)) %>%
+  slice(1:5)
+
+# Top 5 pengeluaran non-makanan tertinggi
+top_nonmakanan <- data %>%
+  select(Nama_kota, Pengeluaran_NonMakanan) %>%
+  arrange(desc(Pengeluaran_NonMakanan)) %>%
+  slice(1:5)
+
+# Cetak hasil
+print("Top 5 Pengeluaran Makanan:")
+print(top_makanan)
+
+print("Top 5 Pengeluaran Non-Makanan:")
+print(top_nonmakanan)
+
+# Visualisasi persentase kemiskinan
+data$Persentase_penduduk_miskin <- as.numeric(data$Persentase.penduduk.miskin)
+
+# Buat bar chart dengan ggplot dan ubah ke plotly
+plot <- ggplot(data, aes(x = reorder(Nama_kota, -Persentase_penduduk_miskin), 
+                         y = Persentase_penduduk_miskin,
+                         fill = provinsi)) +
+  geom_bar(stat = "identity") +
+  labs(title = "Persentase Penduduk Miskin per Kota",
+       x = "Kota",
+       y = "Persentase (%)") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+ggplotly(plot)
+
+
+```
+
+```{r}
+# Konversi kolom ke numerik
+data$Pengeluaran_Makanan <- as.numeric(gsub("[^0-9]", "", data$Rata.rata.Pengeluaran.per.Kapita.Sebulan....Makanan))
+data$Persentase_penduduk_miskin <- as.numeric(data$Persentase.penduduk.miskin)
+
+# Ambil 5 kota dengan pengeluaran makanan tertinggi
+top5 <- data %>%
+  arrange(desc(Pengeluaran_Makanan)) %>%
+  slice(1:5)
+
+# Normalisasi kemiskinan ke skala pengeluaran
+max_pengeluaran <- max(top5$Pengeluaran_Makanan, na.rm = TRUE)
+top5$Kemiskinan_Skala <- top5$Persentase_penduduk_miskin / 100 * max_pengeluaran
+
+# Plot gabungan bar dan garis
+p <- ggplot(top5, aes(x = reorder(Nama_kota, Pengeluaran_Makanan))) +
+  geom_bar(aes(y = Pengeluaran_Makanan, fill = "Pengeluaran Makanan"), stat = "identity") +
+  geom_line(aes(y = Kemiskinan_Skala, group = 1, color = "Persentase Kemiskinan"), size = 1.2) +
+  
+  scale_fill_manual(values = c("Pengeluaran Makanan" = "#1f77b4")) +
+  scale_color_manual(values = c("Persentase Kemiskinan" = "#ff7f0e")) +
+  labs(title = "Top 5 Kota: Pengeluaran Makanan dan Persentase Kemiskinan",
+       x = "Kota/Kabupaten",
+       fill = "", color = "") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        legend.position = "bottom")
+
+# Interaktif dengan plotly
+ggplotly(p)
+
+```
+```{r}
+
+data2 <- read.csv("distribusi pekerja di jaksel.csv")
+
+```
+
+```{r}
+
+
+
+
+names(data2)
+
+
+dp <- ggplot(data2, aes(x = reorder(distribusi.pekerja, persentase), y = persentase, fill = distribusi.pekerja)) +
+  geom_bar(stat = "identity") +
+  coord_flip() +
+  labs(title = "Distribusi Pekerja di Jakarta Selatan",
+       x = "distribusi",
+       y = "persentase") +
+  theme_minimal()+
+  theme(legend.position = "none")
+
+
+ggplotly(dp)
+  
+
+```
+```{r}
+
+data3 <- read.csv("pangandanandistirbusi pekerja.csv")
+
+names(data3)
+
+```
+
+```{r}
+
+
+
+
+
+
+dp <- ggplot(data3, aes(x = reorder(jenis.pekerjaan, persentase), y = persentase, fill = jenis.pekerjaan)) +
+  geom_bar(stat = "identity") +
+  coord_flip() +
+  labs(title = "Distribusi Pekerja di Kabupaten Pangadaran",
+       x = "distribusi",
+       y = "persentase") +
+  theme_minimal()+
+  theme(legend.position = "none")
+
+
+ggplotly(dp)
+  
+
+```
+
+
+```{r}
+# Ambil 5 kota dengan persentase kemiskinan tertinggi
+top5_kemiskinan <- data %>%
+  arrange(desc(`Persentase penduduk miskin`)) %>%
+  select(Nama_kota, `Persentase penduduk miskin`) %>%
+  head(5)
+
+# Ambil 5 kota dengan persentase kemiskinan terendah
+bottom5_kemiskinan <- data %>%
+  arrange(`Persentase penduduk miskin`) %>%
+  select(Nama_kota, `Persentase penduduk miskin`) %>%
+  head(5)
+
+# Buat bar chart untuk kota dengan kemiskinan tertinggi
+ggplot(top5_kemiskinan, aes(x = reorder(Nama_kota, `Persentase penduduk miskin`), 
+                            y = `Persentase penduduk miskin`)) +
+  geom_bar(stat = "identity", fill = "red") +
+  coord_flip() +
+  labs(title = "5 Kota dengan Persentase Kemiskinan Tertinggi",
+       x = "Kota", y = "Persentase Penduduk Miskin (%)") +
+  theme_minimal()
+
+# Buat bar chart untuk kota dengan kemiskinan terendah
+ggplot(bottom5_kemiskinan, aes(x = reorder(Nama_kota, `Persentase penduduk miskin`), 
+                               y = `Persentase penduduk miskin`)) +
+  geom_bar(stat = "identity", fill = "green") +
+  coord_flip() +
+  labs(title = "5 Kota dengan Persentase Kemiskinan Terendah",
+       x = "Kota", y = "Persentase Penduduk Miskin (%)") +
+  theme_minimal()
+
+
+```
+
+
+
